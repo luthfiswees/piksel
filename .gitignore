@@ -2,4 +2,5 @@
 node_modules/
 test/test_image/People_diff
 test/test_image/People2_diff
+uploads/
 .DS_Store
