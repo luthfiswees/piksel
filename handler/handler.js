@@ -27,7 +27,8 @@ async function getDiff(name) {
     let diffImageBuffer = await compare.getDiff(imageBuffer, baselineImageBuffer);
 
     return {
-        diffImageBuffer : diffImageBuffer
+        format : "Base64",
+        imageData : diffImageBuffer.toString('base64')
     };
 }
 
