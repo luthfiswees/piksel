@@ -1,7 +1,7 @@
 const compareImages = require('resemblejs/compareImages');
 const fs = require("mz/fs");
 
-async function getDiff(imagePath, baselinePath){
+async function getDiff(imageBuffer, baselineBuffer){
     const options = {
         output: {
             errorColor: {
@@ -16,28 +16,18 @@ async function getDiff(imagePath, baselinePath){
             outputDiff: true
         },
         scaleToSameSize: true,
-        ignore: ['nothing', 'less', 'antialiasing', 'colors', 'alpha'],
+        ignore: "antialiasing"
     };
 
     const data = await compareImages(
-        await fs.readFile(baselinePath),
-        await fs.readFile(imagePath),
+        Buffer.from(baselineBuffer),
+        Buffer.from(imageBuffer),
         options
     );
 
-    await fs.writeFile(imagePath + '_diff', data.getBuffer());
-}
-
-async function deleteImage(imagePath){
-    let rootDir = process.cwd();
-    try {
-        await fs.unlinkSync(rootDir + '/' + imagePath);
-    } catch (error) {
-        console.log("Failed to delete Image on " + imagePath);
-    }
+    return data.getBuffer();
 }
 
 module.exports = {
-    getDiff,
-    deleteImage,
+    getDiff
 }

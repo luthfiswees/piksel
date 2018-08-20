@@ -9,13 +9,7 @@ async function sendImage(name, newImage) {
     if (imageNotFound) {
         result = await db.store(name, {image: newImage, baselineImage: newImage});
     } else {
-        let oldImagePath         = image.object.data.image.path;
-        let oldBaselineImagePath = image.object.data.baselineImage.path;
-
         result = await db.store(name, {image: newImage, baselineImage: image.object.data.baselineImage});
-        if (oldImagePath !== oldBaselineImagePath) {
-            await compare.deleteImage(oldImagePath);
-        }
     }
 
     return result;
@@ -26,14 +20,14 @@ async function getImage(name) {
 }
 
 async function getDiff(name) {
-    let image             = await db.get(name);
-    let imagePath         = image.object.data.image.path;
-    let baselineImagePath = image.object.data.baselineImage.path;
+    let image               = await db.get(name);
+    let imageBuffer         = image.object.data.image.data;
+    let baselineImageBuffer = image.object.data.baselineImage.data;
 
-    await compare.getDiff(imagePath, baselineImagePath);
+    let diffImageBuffer = await compare.getDiff(imageBuffer, baselineImageBuffer);
 
     return {
-        diffImagePath : imagePath + '_diff'
+        diffImageBuffer : diffImageBuffer
     };
 }
 
@@ -43,14 +37,7 @@ async function changeBaselineImage(name, newBaselineImage) {
     let result     = {}
 
     if (imageFound){
-        let oldImagePath         = image.object.data.image.path;
-        let oldBaselineImagePath = image.object.data.baselineImage.path;
-
         await db.store(name, {image: image.object.data.image, baselineImage: newBaselineImage});
-        if (oldImagePath !== oldBaselineImagePath) {
-            await compare.deleteImage(oldBaselineImagePath);
-        }
-        
         result = {message: "Successfully updated baseline image for image with name : " + name};
     } else {
         result = {message: "Failed to update baseline image for image with name : " + name + ". Image not found"};
