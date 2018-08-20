@@ -28,6 +28,16 @@ async function getDiff(imagePath, baselinePath){
     await fs.writeFile(imagePath + '_diff', data.getBuffer());
 }
 
+async function deleteImage(imagePath){
+    let rootDir = process.cwd();
+    try {
+        await fs.unlinkSync(rootDir + '/' + imagePath);
+    } catch (error) {
+        console.log("Failed to delete Image on " + imagePath);
+    }
+}
+
 module.exports = {
-    getDiff
+    getDiff,
+    deleteImage,
 }
