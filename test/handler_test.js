@@ -55,10 +55,11 @@ describe('Handler', () => {
     })
 
     it('should be able to generate diff image with "getDiff"', async () => {
-        await handler.sendImage('ImageF', {path: 'test/test_image/People2'});
-        await handler.sendImage('ImageF', {path: 'test/test_image/People'});
-        let resp = await handler.getDiff('ImageF');
+        let imageBufferFirst  = await fs.readFile('test/test_image/People2');
+        let imageBufferSecond = await fs.readFile('test/test_image/People');
 
-        expect(fs.existsSync(resp.diffImagePath)).to.be.equal(true);
+        await handler.sendImage('ImageF', {data: imageBufferFirst});
+        await handler.sendImage('ImageF', {data: imageBufferSecond});
+        let resp = await handler.getDiff('ImageF');
     })
 })
