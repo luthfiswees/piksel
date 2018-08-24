@@ -58,3 +58,31 @@ Run the test to make sure it's okay with ...
 ```
 npm test
 ```
+
+## Endpoints
+
+#### POST `/send_image`
+##### What it does
+Store image in it's designated tags
+##### Param
+`name` : tag name of the image
+`screenshot` : File attachment in a form of image
+
+#### POST `/change_baseline_image`
+##### What it does
+Replace baseline image on that particular tags
+##### Param
+`name` : tag name of the image
+`screenshot` : File attachment in a form of image
+
+#### GET `/image`
+##### What it does
+Get original image on that particular tags
+##### Param
+`name` : tag name of the image
+
+#### GET `/diff_image`
+##### What it does
+Get diff image on that particular tags
+##### Param
+`name` : tag name of the image
