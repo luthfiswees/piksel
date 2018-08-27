@@ -25,7 +25,10 @@ async function getDiff(imageBuffer, baselineBuffer){
         options
     );
 
-    return data.getBuffer();
+    return {
+        imageData: data.getBuffer(),
+        misMatchPercentage: data['misMatchPercentage']
+    };
 }
 
 module.exports = {
