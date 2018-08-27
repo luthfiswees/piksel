@@ -24,11 +24,14 @@ async function getDiff(name) {
     let imageBuffer         = image.object.data.image.data;
     let baselineImageBuffer = image.object.data.baselineImage.data;
 
-    let diffImageBuffer = await compare.getDiff(imageBuffer, baselineImageBuffer);
+    let diffImage           = await compare.getDiff(imageBuffer, baselineImageBuffer);
+    let diffImageBuffer     = diffImage['imageData'];
+    let diffImagePercentage = diffImage['misMatchPercentage'];
 
     return {
         format : "Base64",
-        imageData : diffImageBuffer.toString('base64')
+        imageData : diffImageBuffer.toString('base64'),
+        missPercentage : diffImagePercentage
     };
 }
 
