@@ -1,0 +1,10 @@
+version: '3'
+services:
+  piksel:
+    build: .
+    ports:
+     - "3000:3000"
+    depends_on:
+     - couchdb  
+  couchdb:
+    image: "couchdb:1.7.2"
