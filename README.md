@@ -59,6 +59,19 @@ Run the test to make sure it's okay with ...
 npm test
 ```
 
+## Using Docker
+Make sure your docker client is ready. Just clone the repository and turn it on with docker compose
+```
+git clone https://github.com/luthfiswees/piksel.git
+cd piksel
+docker-compose up
+```
+
+Or run it on the background (detach)
+```
+docker-compose up -d
+```
+
 ## Endpoints
 
 #### POST `/send_image`
