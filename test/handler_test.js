@@ -1,65 +1,264 @@
-const fs   = require("mz/fs");
-let chai   = require('chai');
-let expect = chai.expect;
+// Library initialization
+const fs     = require("mz/fs");
+const sinon  = require('sinon');
+const chai   = require('chai');
+const expect = chai.expect;
 
-let handler = require('../handler/handler');
-let db      = require('../db/db');
+const handler = require('../handler/handler');
+const compare = require('../compare/compare');
+const db      = require('../db/db');
 
+// Test Objects
+let imageKey  = "success-image"
+let imageDiff = {
+    imageData: {
+        type: "Buffer",
+        data: [1, 3, 5, 7, 9, 11]
+    },
+    misMatchPercentage: 5.33
+}
+let imageObj  = { 
+    name: "success-image_02_53_53.png",
+    data: {
+        type: "Buffer",
+        data: [0, 1, 2, 3, 4, 5],
+    },
+    encoding: "binary",
+    truncated: false,
+    mimetype: "image/png",
+    md5: "abc123"
+}
+let imageBaselineObj = { 
+    name: "success-image_02_51_51.png",
+    data: {
+        type: "Buffer",
+        data: [1, 2, 3, 4, 5, 6],
+    },
+    encoding: "binary",
+    truncated: false,
+    mimetype: "image/png",
+    md5: "abc456"
+}
+let successBody = {
+    object: { 
+        _id: imageKey, 
+        _rev: "2", 
+        data: { 
+            image: imageObj,
+            baselineImage: imageBaselineObj
+        }
+    },
+    status_code: 200
+}
+let successBaselineBody = {
+    object: { 
+        _id: imageKey, 
+        _rev: "1", 
+        data: { 
+            image: imageBaselineObj,
+            baselineImage: imageBaselineObj
+        }
+    },
+    status_code: 200
+}
+let failBodyMissing = {
+    object: {},
+    status_code: "EDOCMISSING"
+}
+let failBodyUnknown = {
+    object: {},
+    status_code: "EUNKNOWN"
+}
+
+// Test Cases
 describe('Handler', () => {
-    before(() =>{
-        db.createDatabase(db.dbName);
+    describe('sendImage', () => {
+        it('should be able to store image when image name is unknown', async () => {
+            let stubGet   = sinon.stub(db, 'get').resolves(failBodyUnknown)
+            let stubStore = sinon.stub(db, 'store').resolves(successBody)
+
+            let result = await handler.sendImage(imageKey, imageObj)
+
+            sinon.assert.calledOnce(stubGet)
+            sinon.assert.calledOnce(stubStore)
+            sinon.assert.calledWith(stubGet, imageKey)
+            sinon.assert.calledWith(stubStore, imageKey, { image: imageObj, baselineImage: imageObj})
+            expect(result).to.be.equal(successBody)
+
+            stubGet.restore()
+            stubStore.restore()
+        })
+
+        it('should not be able to store image when image name is missing', async () => {
+            let stubGet   = sinon.stub(db, 'get').resolves(failBodyMissing)
+            let stubStore = sinon.stub(db, 'store').resolves(successBody)
+
+            let result = await handler.sendImage(imageKey, imageObj)
+
+            sinon.assert.calledOnce(stubGet)
+            sinon.assert.calledOnce(stubStore)
+            sinon.assert.calledWith(stubGet, imageKey)
+            sinon.assert.calledWith(stubStore, imageKey, { image: imageObj, baselineImage: imageObj})
+            expect(result).to.be.equal(successBody)
+
+            stubGet.restore()
+            stubStore.restore()
+        })
+
+        it('should be able to replace image baseline with new image', async () => {
+            let stubGet   = sinon.stub(db, 'get').resolves(successBaselineBody)
+            let stubStore = sinon.stub(db, 'store').resolves(successBody)
+
+            let result = await handler.sendImage(imageKey, imageObj)
+
+            sinon.assert.calledOnce(stubGet)
+            sinon.assert.calledOnce(stubStore)
+            sinon.assert.calledWith(stubGet, imageKey)
+            sinon.assert.calledWith(stubStore, imageKey, { image: imageObj, baselineImage: imageBaselineObj})
+            expect(result).to.be.equal(successBody)
+
+            stubGet.restore()
+            stubStore.restore()
+        })
     })
-    after(() => {
-        db.dropDatabase(db.dbName);
+
+    describe('getImage', () => {
+        it('should be able to fetch image if avalaible', async () => {
+            let stub = sinon.stub(db, 'get').resolves(successBody)
+
+            let result = await handler.getImage(imageKey)
+
+            sinon.assert.calledOnce(stub)
+            sinon.assert.calledWith(stub, imageKey)
+            expect(result).to.be.equal(successBody)
+
+            stub.restore()
+        })
+
+        it('should be able to display error if image is not avalaible', async () => {
+            let stub = sinon.stub(db, 'get').resolves(failBodyUnknown)
+
+            let result = await handler.getImage(imageKey)
+
+            sinon.assert.calledOnce(stub)
+            sinon.assert.calledWith(stub, imageKey)
+            expect(result).to.be.equal(failBodyUnknown)
+
+            stub.restore()
+        })
     })
 
-    it('should be able to receive Image through "sendImage"', async () => {
-        await handler.sendImage('ImageA', {imagePath: 'ImageObj'});
-        let resp = await db.get('ImageA'); 
+    describe('getDiff', () => {
+        it('should be able to fetch image diff if image is available', async () => {
+            let stubGet  = sinon.stub(db, 'get').resolves(successBody)
+            let stubDiff = sinon.stub(compare, 'getDiff').returns(imageDiff)
 
-        expect(resp.object.data.image.imagePath).to.be.equal('ImageObj');
-        expect(resp.object.data.baselineImage.imagePath).to.be.equal('ImageObj');
+            let result = await handler.getDiff(imageKey)
+
+            sinon.assert.calledOnce(stubGet)
+            sinon.assert.calledOnce(stubDiff)
+            sinon.assert.calledWith(stubGet, imageKey)
+            sinon.assert.calledWith(stubDiff, imageObj.data, imageBaselineObj.data)
+            expect(result.format).to.be.equal("Base64")
+            expect(result.imageData).to.be.equal(imageDiff.imageData.toString("base64"))
+            expect(result.missPercentage).to.be.equal(imageDiff.misMatchPercentage)
+            expect(result.message).to.be.equal("Successfully fetch image diff with tag => " + imageKey)
+            expect(result.error).to.be.false
+
+            stubGet.restore()
+            stubDiff.restore()
+        })
+
+        it('should be able to return error if diff with certain name is not available', async () => {
+            let stubGet  = sinon.stub(db, 'get').rejects(failBodyMissing)
+            let stubDiff = sinon.stub(compare, 'getDiff').returns({ message: "Error"})
+
+            let result = await handler.getDiff(imageKey)
+
+            sinon.assert.calledOnce(stubGet)
+            expect(result.message).to.be.equal("Failed to fetch image diff with tag => " + imageKey)
+            expect(result.error).to.be.true
+
+            stubGet.restore()
+            stubDiff.restore()
+        })
+
+        it('should be able to return error if diff function is not able to process the image', async () => {
+            let stubGet  = sinon.stub(db, 'get').resolves(successBody)
+            let stubDiff = sinon.stub(compare, 'getDiff').returns({ message: "Error"})
+
+            let result = await handler.getDiff(imageKey)
+
+            sinon.assert.calledOnce(stubGet)
+            sinon.assert.calledOnce(stubDiff)
+            expect(result.message).to.be.equal("Failed to fetch image diff with tag => " + imageKey)
+            expect(result.error).to.be.true
+
+            stubGet.restore()
+            stubDiff.restore()
+        })
     })
 
-    it('should be able to send image without changing baseline through "sendImage"', async () => {
-        await handler.sendImage('ImageB', {imagePath: 'ImageObj'});
-        await handler.sendImage('ImageB', {imagePath: 'ImageObjNew'});
-        let resp = await db.get('ImageB');
+    describe('changeBaselineImage', () => {
+        it('should be able to change current baseline image', async () => {
+            let stubGet   = sinon.stub(db, 'get').resolves(successBaselineBody)
+            let stubStore = sinon.stub(db, 'store').resolves(successBody)
 
-        expect(resp.object.data.image.imagePath).to.be.equal('ImageObjNew');
-        expect(resp.object.data.baselineImage.imagePath).to.be.equal('ImageObj');
-    })
+            let result = await handler.changeBaselineImage(imageKey, imageObj)
 
-    it('should be able to get right image through "getImage"', async () => {
-        await handler.sendImage('ImageC', {imagePath: 'ImageObj'});
-        let resp = await handler.getImage('ImageC');
-        
-        expect(resp.object.data.image.imagePath).to.be.equal('ImageObj');
-        expect(resp.object.data.baselineImage.imagePath).to.be.equal('ImageObj');
-    })
+            sinon.assert.calledOnce(stubGet)
+            sinon.assert.calledOnce(stubStore)
+            sinon.assert.calledWith(stubGet, imageKey)
+            sinon.assert.calledWith(stubStore, imageKey, { image: imageBaselineObj, baselineImage: imageObj})
+            expect(result.message).to.be.equal("Successfully updated baseline image for image with name : " + imageKey)
 
-    it('should be able to update baseline for existing image with key "ImageD" using "changeBaselineImage"', async () => {
-        await handler.sendImage('ImageD', {imagePath: 'ImageObj'});
-        let message = await handler.changeBaselineImage('ImageD', {imagePath: 'ImageObjNew'});
-        let resp = await db.get('ImageD');
+            stubGet.restore()
+            stubStore.restore()
+        })
 
-        expect(resp.object.data.image.imagePath).to.be.equal('ImageObj');
-        expect(resp.object.data.baselineImage.imagePath).to.be.equal('ImageObjNew');
-        expect(message.message).to.be.equal('Successfully updated baseline image for image with name : ImageD');
-    })
+        it('should be able to return error message if image not found', async () => {
+            let stubGet   = sinon.stub(db, 'get').resolves(failBodyMissing)
+            let stubStore = sinon.stub(db, 'store')
 
-    it('should not be able to update non-existing image with key "ImageE" using "changeBaselineImage"', async () => {
-        let message = await handler.changeBaselineImage('ImageE', {imagePath: 'ImageObjNew'});
+            let result = await handler.changeBaselineImage(imageKey, imageObj)
 
-        expect(message.message).to.be.equal('Failed to update baseline image for image with name : ImageE. Image not found');
-    })
+            sinon.assert.calledOnce(stubGet)
+            sinon.assert.notCalled(stubStore)
+            sinon.assert.calledWith(stubGet, imageKey)
+            expect(result.message).to.be.equal("Failed to update baseline image for image with name : " + imageKey + ". Image not found")
 
-    it('should be able to generate diff image with "getDiff"', async () => {
-        let imageBufferFirst  = await fs.readFile('test/test_image/People2');
-        let imageBufferSecond = await fs.readFile('test/test_image/People');
+            stubGet.restore()
+            stubStore.restore()
+        })
 
-        await handler.sendImage('ImageF', {data: imageBufferFirst});
-        await handler.sendImage('ImageF', {data: imageBufferSecond});
-        let resp = await handler.getDiff('ImageF');
+        it('should be able to return error message if image is unknown', async () => {
+            let stubGet   = sinon.stub(db, 'get').resolves(failBodyUnknown)
+            let stubStore = sinon.stub(db, 'store')
+
+            let result = await handler.changeBaselineImage(imageKey, imageObj)
+
+            sinon.assert.calledOnce(stubGet)
+            sinon.assert.notCalled(stubStore)
+            sinon.assert.calledWith(stubGet, imageKey)
+            expect(result.message).to.be.equal("Failed to update baseline image for image with name : " + imageKey + ". Image not found")
+
+            stubGet.restore()
+            stubStore.restore()
+        })
+
+        it('should be able to return error message if client request with arbitrary files that is not image', async () => {
+            let stubGet   = sinon.stub(db, 'get').returns(new Error("Random Error"))
+            let stubStore = sinon.stub(db, 'store')
+
+            let result = await handler.changeBaselineImage(imageKey, imageObj)
+
+            sinon.assert.calledOnce(stubGet)
+            sinon.assert.notCalled(stubStore)
+            sinon.assert.calledWith(stubGet, imageKey)
+            expect(result.message).to.be.equal("Failed to update baseline image for image with name : " + imageKey + ". Unexpected Error.")
+
+            stubGet.restore()
+            stubStore.restore()
+        })
     })
 })
