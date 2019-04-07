@@ -1,5 +1,5 @@
 # Piksel
-[![Build Status](https://travis-ci.org/luthfiswees/piksel.svg?branch=master)](https://travis-ci.org/luthfiswees/piksel)
+[![Build Status](https://travis-ci.org/luthfiswees/piksel.svg?branch=master)](https://travis-ci.org/luthfiswees/piksel) [![Coverage Status](https://coveralls.io/repos/github/luthfiswees/piksel/badge.svg?branch=experiment-sinon)](https://coveralls.io/github/luthfiswees/piksel?branch=experiment-sinon)
 
 Pixel comparison microservice for visual diff testing
 
