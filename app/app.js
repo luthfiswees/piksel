@@ -1,12 +1,9 @@
-require('dotenv').config()
-
 const express    = require('express')
 const fileUpload = require('express-fileupload');
 const app        = express()
 
-const db      = require('./db/db')
-const handler = require('./handler/handler')
-const port    = process.env.PIKSEL_PORT
+const db      = require('../db/db')
+const handler = require('../handler/handler')
 
 db.createDatabase(db.dbName);
 app.use(fileUpload());
@@ -29,4 +26,6 @@ app.post('/change_baseline_image', async (req, res) => {
     res.send(await handler.changeBaselineImage(req.body.name, req.files.screenshot));
 })
 
-app.listen(port, () => console.log('Example app listening on port ' + port))
+module.exports = {
+  app
+}

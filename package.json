@@ -4,8 +4,9 @@
   "description": "Image comparer service",
   "main": "app.js",
   "scripts": {
-    "start": "node app.js",
-    "test": "mocha"
+    "start": "node index.js",
+    "test": "nyc mocha",
+    "coveralls": "istanbul cover ./node_modules/mocha/bin/_mocha --report lcovonly -- -R spec && cat ./coverage/lcov.info | ./node_modules/coveralls/bin/coveralls.js && rm -rf ./coverage"
   },
   "keywords": [
     "Image",
@@ -27,6 +28,11 @@
     "when": "^3.7.8"
   },
   "devDependencies": {
+    "coveralls": "^3.0.3",
+    "istanbul": "^0.4.5",
+    "istanbul-coveralls": "^1.0.3",
+    "mocha-lcov-reporter": "^1.3.0",
+    "nyc": "^13.3.0",
     "sinon": "^7.3.1"
   }
 }
