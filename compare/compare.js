@@ -1,5 +1,4 @@
 const compareImages = require('resemblejs/compareImages');
-const fs = require("mz/fs");
 
 async function getDiff(imageBuffer, baselineBuffer){
     const options = {

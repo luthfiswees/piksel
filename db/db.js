@@ -1,25 +1,24 @@
 const db      = require('./connection').couch;
 const dbName = require('./connection').dbName;
 
-function logError(err){
-    console.log("Error code : " + err.code);
-    console.log(err);
-}
-
-function createDatabase(dbname){
-    db.createDatabase(dbName).then(() => {
+async function createDatabase(dbname){
+    let result = db.createDatabase(dbname).then(() => {
         return new Promise ((resolve, reject) => resolve({ message: "Successfully created database " + dbname}));
     }, err => {
         return new Promise ((resolve, reject) => resolve({ message: "Failed to create database " + dbname + ". ERROR : " + err.code}));
     });
+
+    return result;
 }
 
-function dropDatabase(dbname){
-    db.dropDatabase(dbname).then(() => {
+async function dropDatabase(dbname){
+    let result = db.dropDatabase(dbname).then(() => {
         return new Promise ((resolve, reject) => resolve({ message: "Successfully dropped database " + dbname}));
     }, err => {
         return new Promise ((resolve, reject) => resolve({ message: "Failed to drop database " + dbname + ". ERROR : " + err.code}));
     });
+
+    return result;
 }
 
 async function store(key, obj) {
@@ -113,6 +112,8 @@ async function erase(key) {
             });
         });
     });
+
+    return result;
 }
 
 module.exports = {

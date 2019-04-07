@@ -1,13 +1,7 @@
 language: node_js
 node_js:
   - "9"
-services:
-  - couchdb
-env:
-  - PIKSEL_DATABASE_NAME=piksel PIKSEL_DATABASE_HOST=127.0.0.1 PIKSEL_DATABASE_PROTOCOL=http PIKSEL_DATABASE_PORT=5984
 install:
   - npm install
-before_script:
-  - curl -X PUT localhost:5984/piksel
 script:
-  - npm test
+  - npm run coveralls
