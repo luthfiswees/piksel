@@ -1,6 +1,6 @@
 FROM node:9
 
-LABEL mantainer "Luthfi"
+LABEL mantainer "Luthfi (https://github.com/luthfiswees), Anto (https://github.com/)"
 
 WORKDIR /usr/src/app
 
