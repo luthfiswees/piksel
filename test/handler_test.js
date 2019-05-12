@@ -6,7 +6,7 @@ const expect = chai.expect;
 
 const handler = require('../handler/handler');
 const compare = require('../compare/compare');
-const db      = require('../db/db');
+const db      = require('../db/adapters/couch');
 
 // Test Objects
 let imageKey  = "success-image"

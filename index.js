@@ -4,7 +4,7 @@ const express    = require('express')
 const fileUpload = require('express-fileupload');
 const app        = express()
 
-const db      = require('./db/db')
+const db      = require('./db/adapters/couch')
 const handler = require('./handler/handler')
 const port    = process.env.PIKSEL_PORT
 

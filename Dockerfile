@@ -5,9 +5,10 @@ LABEL mantainer "Luthfi (https://github.com/luthfiswees), Anto (https://github.c
 WORKDIR /usr/src/app
 
 ENV PIKSEL_DATABASE_NAME piksel
-ENV PIKSEL_DATABASE_HOST couchdb
-ENV PIKSEL_DATABASE_PROTOCOL http
-ENV PIKSEL_DATABASE_PORT 5984
+
+ENV PIKSEL_COUCHDB_HOST couchdb
+ENV PIKSEL_COUCHDB_PROTOCOL http
+ENV PIKSEL_COUCHDB_PORT 5984
 ENV PIKSEL_PORT 4500
 
 COPY package*.json /usr/src/app/
