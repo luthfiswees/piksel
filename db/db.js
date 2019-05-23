@@ -1,127 +1,61 @@
-const db      = require('./connection').couch;
-const dbName = require('./connection').dbName;
+const adapter = process.env.ADAPTER;
+const couchDb = require('./adapters/couch');
 
-async function createDatabase(dbname){
-    let result = db.createDatabase(dbname).then(() => {
-        return new Promise ((resolve, reject) => resolve({ message: "Successfully created database " + dbname}));
-    }, err => {
-        return new Promise ((resolve, reject) => resolve({ message: "Failed to create database " + dbname + ". ERROR : " + err.code}));
-    });
-
-    return result;
+function createDatabase(dbName) {
+  switch (adapter) {
+    default:
+      return couchDb.createDatabase(dbName);
+  }
 }
 
-async function dropDatabase(dbname){
-    let result = db.dropDatabase(dbname).then(() => {
-        return new Promise ((resolve, reject) => resolve({ message: "Successfully dropped database " + dbname}));
-    }, err => {
-        return new Promise ((resolve, reject) => resolve({ message: "Failed to drop database " + dbname + ". ERROR : " + err.code}));
-    });
-
-    return result;
+function dropDatabase(dbName) {
+  switch (adapter) {
+    default:
+      return couchDb.dropDatabase(dbName);
+  }
 }
 
-async function store(key, obj) {
-    let result = await db.insert(dbName, {
-        _id: key,
-        data: obj
-    }).then(({data, headers, status}) => {
-        return new Promise ((resolve, reject) => {
-            resolve({
-                object: data,
-                status_code: status
-            });
-        });
-    }, err => {
-        if (err.code == 'EDOCCONFLICT') {
-            return update(key, obj);
-        } else {
-            return new Promise ((resolve, reject) => {
-                resolve({
-                    object: {},
-                    status_code: err.code
-                });
-            });
-        }
-    });
-
-    return result;
-};
-
-async function get(key) {
-    let result = await db.get(dbName, key).then(({data, headers, status}) => {
-        return new Promise ((resolve, reject) => {
-            resolve({
-                object: data,
-                status_code: status
-            });
-        });
-    }, err => {
-        return new Promise ((resolve, reject) => {
-            resolve({
-                object: {},
-                status_code: err.code
-            });
-        });
-    });
-
-    return result;
+function store(key, obj) {
+  switch(adapter) {
+    default:
+      return couchDb.store(key, obj)
+  }
 }
 
-async function update(key, obj) {
-    let formerObj = await get(key);
-
-    let result = await db.update(dbName, {
-        _id: key,
-        _rev: formerObj.object._rev,
-        data: obj
-    }).then(({data, headers, status}) => {
-        return new Promise ((resolve, reject) => {
-            resolve({
-                object: data,
-                status_code: status
-            });
-        });
-    }, err => {
-        return new Promise ((resolve, reject) => {
-            resolve({
-                object: {},
-                status_code: err.code
-            });
-        });
-    });
-
-    return result;
+function get(key) {
+  switch(adapter) {
+    default:
+      return couchDb.get(key);
+  }
 }
 
-async function erase(key) {
-    let formerObj = await get(key);
+function update(key, obj) {
+  switch(adapter) {
+    default:
+      return couchDb.update(key, obj);
+  }
+}
 
-    let result = await db.del(dbName, key, formerObj.object._rev).then(({data, headers, status}) => {
-        return new Promise ((resolve, reject) => {
-            resolve({
-                object: data,
-                status_code: status
-            });
-        });
-    }, err => {
-        return new Promise ((resolve, reject) => {
-            resolve({
-                object: {},
-                status_code: err.code
-            });
-        });
-    });
+function erase(key) {
+  switch(adapter) {
+    default:
+      return couchDb.erase(key);
+  }
+}
 
-    return result;
+function dbName() {
+  switch(adapter) {
+    default:
+      return couchDb.dbName;
+  }
 }
 
 module.exports = {
-    dbName,
-    dropDatabase,
-    createDatabase,
-    store,
-    get,
-    update,
-    erase
+  dbName,
+  dropDatabase,
+  createDatabase,
+  store,
+  get,
+  update,
+  erase
 }

@@ -9,7 +9,7 @@ const expect     = chai.expect;
 
 describe("Connection with Default Values", () => {
   it('should create a database instance', async () => {
-    expect(connection.couch._baseUrl).to.be.equal(protocol + '://' + host + ':' + db_port)
+    expect(connection.database._baseUrl).to.be.equal(protocol + '://' + host + ':' + db_port)
     expect(connection.dbName).to.be.equal(name)
   })
 })
